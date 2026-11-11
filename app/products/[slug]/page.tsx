@@ -12,19 +12,18 @@ const db = () => supabase;
 export const revalidate = 60;
 
 async function load(slug: string) {
-  const s = db();
-  const { data: p } = await s.from("products").select("*").eq("slug", slug).single<Product>();
-  if (!p) return null;
-  // Related: products sharing a category with this one.
-  const { data: cats } = await s.from("product_categories").select("category_id").eq("product_id", p.id);
-  const ids = (cats ?? []).map((c) => c.category_id);
+  // Two round trips instead of four: the product with its category ids, then related products.
+  const { data } = await db().from("products").select("*, product_categories(category_id)").eq("slug", slug).maybeSingle();
+  if (!data) return null;
+  const p = data as Product & { product_categories: { category_id: string }[] };
+  const ids = p.product_categories.map((c) => c.category_id);
   let related: Product[] = [];
   if (ids.length) {
-    const { data: links } = await s.from("product_categories").select("product_id").in("category_id", ids).neq("product_id", p.id).limit(8);
-    const pids = [...new Set((links ?? []).map((l) => l.product_id))].slice(0, 4);
-    if (pids.length) related = ((await s.from("products").select("*").in("id", pids)).data ?? []) as Product[];
+    const { data: rel } = await db().from("products").select("*, product_categories!inner(category_id)")
+      .in("product_categories.category_id", ids).neq("id", p.id).limit(4);
+    related = (rel ?? []) as Product[];
   }
-  return { p, related };
+  return { p: p as Product, related };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -43,7 +42,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   ].filter((x): x is [string, string] => !!x[1]);
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-10">
+    <main className="page-in mx-auto max-w-6xl px-5 py-10">
       <div className="grid gap-10 lg:grid-cols-2">
         <ProductGallery images={p.images} name={p.name} />
         <div>

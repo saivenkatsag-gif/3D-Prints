@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { background: #F4F2FB; color: #2A2745; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif; letter-spacing: -0.02em; }
+:focus-visible { outline: 3px solid #FF6B3D; outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes bob { 50% { transform: translateY(-12px) rotate(2deg); } }
+  .bob { animation: bob 5s ease-in-out infinite; }
+}

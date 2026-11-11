@@ -2,11 +2,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, ShoppingBag } from "lucide-react";
+import { Search, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useUser } from "@/lib/use-user";
 
 export default function Header() {
   const { count } = useCart();
+  const { user } = useUser();
   const router = useRouter();
   const [q, setQ] = useState("");
   return (
@@ -26,6 +28,9 @@ export default function Header() {
           <Search size={16} className="text-neutral-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search toys, keychains…" aria-label="Search products" className="w-full bg-transparent outline-none" />
         </form>
+        <Link href="/account" className="flex h-10 items-center gap-2 rounded-full border border-violet-100 bg-white px-4 font-bold">
+          <User size={16} /><span className="hidden sm:inline">{user ? (user.user_metadata?.full_name?.split(" ")[0] ?? "Account") : "Sign in"}</span>
+        </Link>
         <Link href="/cart" className="flex h-10 items-center gap-2 rounded-full bg-[#2A2745] px-4 font-bold text-white">
           <ShoppingBag size={16} /> Cart <span>{count}</span>
         </Link>

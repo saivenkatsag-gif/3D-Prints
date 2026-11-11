@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, MessageCircle } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useUser } from "@/lib/use-user";
 import { buildWhatsAppUrl, validateCustomer } from "@/lib/whatsapp";
 import type { Customer } from "@/lib/types";
 
@@ -16,8 +17,15 @@ const fields: { k: keyof Customer; label: string; type?: string; mode?: "numeric
 
 export default function CheckoutModal({ onClose }: { onClose: () => void }) {
   const { items, total, clear } = useCart();
+  const { user } = useUser();
   const [c, setC] = useState<Customer>(empty);
   const [err, setErr] = useState<Partial<Record<keyof Customer, string>>>({});
+
+  // Signed-in customers get their name and mobile number filled in.
+  useEffect(() => {
+    if (!user) return;
+    setC((cur) => ({ ...cur, name: cur.name || user.user_metadata?.full_name || "", phone: cur.phone || user.user_metadata?.phone || "" }));
+  }, [user]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
